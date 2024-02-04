@@ -22,6 +22,7 @@ func main() {
     router.GET("/hello/:name", Hello)
     router.GET("/add/:name/:value", AddItem)
     router.GET("/list/", ListItems)
+    router.GET("/view/:index", ViewItem)
 
     log.Print("Listening for requests...")
 
@@ -40,7 +41,7 @@ func AddItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     name := ps.ByName("name")
     value, err := strconv.Atoi(ps.ByName("value"))
     if err != nil {
-        fmt.Fprintf(w, "Error, `%s` is not a valid integer", ps.ByName("value"))
+        fmt.Fprintf(w, "Error: `%s` is not a valid integer", ps.ByName("value"))
         return
     }
     fmt.Fprintf(w,
@@ -58,7 +59,7 @@ func AddItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func ListItems(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     if len(db) == 0 {
         log.Print("Not listing items")
-        fmt.Fprint(w, "No items, add them by going to `/add/<name>/<value>`")
+        fmt.Fprint(w, "No items to list, add them by going to `/add/<name>/<value>`")
         return
     }
     log.Print("Listing items")
@@ -72,3 +73,32 @@ func ListItems(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     }
 }
 
+func ViewItem(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+    if len(db) == 0 {
+        fmt.Fprint(w, "No items to view, add them by going to `/add/<name>/<value>`")
+        return
+    }
+    index, err := strconv.Atoi(ps.ByName("index"))
+    if err != nil {
+        fmt.Fprintf(w, "Error: `%s` is not a valid integer", ps.ByName("index"))
+        return
+    }
+
+    if index >= len(db) {
+        fmt.Fprintf(w, "Error: `%d` is to high", index)
+        return
+    }
+    if index < 0 {
+        fmt.Fprintf(w, "Error: `%d` is to low", index)
+        return
+    }
+
+    item := db[index]
+
+    fmt.Fprintf(w,
+        "Item %d:\n\tName: %s\n\tValue: %d\n\n",
+        index,
+        item.Name,
+        item.Value,
+    )
+}
